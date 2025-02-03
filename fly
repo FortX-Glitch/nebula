@@ -89,7 +89,7 @@ flyButtonUI.TextSize = 18
 flyButtonUI.TextStrokeTransparency = 0.8
 flyButtonUI.Parent = screenGui
 
--- Message "Nebula Cheats Premium" dans un en-tête noir et violet
+-- Message "Nebula Cheats [FREE]" dans un en-tête noir et violet
 local nebulaMessage = Instance.new("TextLabel")
 nebulaMessage.Size = UDim2.new(0, 200, 0, 50)
 nebulaMessage.Position = UDim2.new(1, -210, 1, -50)  -- Positionné en bas à droite
