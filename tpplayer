@@ -1,0 +1,157 @@
+--- Configs
+local tpbutton = "t"  -- Touche pour activer/désactiver la téléportation
+local controls = {
+    front = "w",
+    back = "s",
+    right = "d",
+    left = "a",
+    up = " ",
+    down = "q"
+}
+-- Configs
+
+local player = game:GetService("Players").LocalPlayer
+local mouse = player:GetMouse()
+local runservice = game:GetService("RunService")
+
+local teleporting = false
+local selectedPlayer = nil  -- Le joueur auquel on va se téléporter
+
+-- Création de l'UI pour la téléportation
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+-- Fenêtre de sélection des joueurs (noire et semi-transparente)
+local playerListUI = Instance.new("Frame")
+playerListUI.Size = UDim2.new(0, 300, 0, 400)
+playerListUI.Position = UDim2.new(0.5, -150, 0.5, -200)
+playerListUI.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+playerListUI.BackgroundTransparency = 0.6  -- Transparence du fond
+playerListUI.Visible = false  -- La fenêtre est initialement invisible
+playerListUI.Parent = screenGui
+
+-- Titre pour la fenêtre
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(0, 300, 0, 40)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.Text = "Choisir un joueur pour TP"
+titleLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+titleLabel.BackgroundTransparency = 0.6
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.SourceSans
+titleLabel.TextSize = 18
+titleLabel.TextStrokeTransparency = 0.8
+titleLabel.Parent = playerListUI
+
+-- Croisillon pour fermer la fenêtre
+local closeButton = Instance.new("TextButton")
+closeButton.Text = "X"
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -40, 0, 5)  -- Positionné dans le coin supérieur droit
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.SourceSans
+closeButton.TextSize = 18
+closeButton.TextStrokeTransparency = 0.8
+closeButton.Parent = playerListUI
+
+closeButton.MouseButton1Click:Connect(function()
+    playerListUI.Visible = false  -- Ferme la fenêtre en cliquant sur la croix
+end)
+
+-- Fonction pour afficher la liste des joueurs
+local function showPlayerList()
+    -- On commence par supprimer les anciens boutons s'ils existent
+    for _, v in pairs(playerListUI:GetChildren()) do
+        if v:IsA("TextButton") and v ~= closeButton and v ~= titleLabel then
+            v:Destroy()
+        end
+    end
+    
+    local yPosition = 40  -- Position de départ pour les boutons de joueurs (après le titre)
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= player then
+            local button = Instance.new("TextButton")
+            button.Text = p.Name
+            button.Size = UDim2.new(0, 280, 0, 30)
+            button.Position = UDim2.new(0, 10, 0, yPosition)
+            button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            button.TextColor3 = Color3.fromRGB(128, 0, 128)
+            button.Font = Enum.Font.SourceSans
+            button.TextSize = 18
+            button.TextStrokeTransparency = 0.8
+            button.Parent = playerListUI
+            
+            button.MouseButton1Click:Connect(function()
+                selectedPlayer = p
+                tpButtonUI.Text = "Téléporter à " .. p.Name
+                playerListUI.Visible = false  -- Fermer la fenêtre de sélection
+            end)
+            
+            yPosition = yPosition + 35  -- Espacement entre les boutons
+        end
+    end
+    playerListUI.Visible = true  -- Afficher la fenêtre de sélection des joueurs
+end
+
+-- Bouton pour ouvrir la liste des joueurs
+local tpButtonUI = Instance.new("TextButton")
+tpButtonUI.Text = "Choisir un joueur"
+tpButtonUI.Size = UDim2.new(0, 200, 0, 50)
+tpButtonUI.Position = UDim2.new(0, 10, 0.8, -25)
+tpButtonUI.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+tpButtonUI.TextColor3 = Color3.fromRGB(128, 0, 128)
+tpButtonUI.Font = Enum.Font.SourceSans
+tpButtonUI.TextSize = 18
+tpButtonUI.TextStrokeTransparency = 0.8
+tpButtonUI.Parent = screenGui
+
+tpButtonUI.MouseButton1Click:Connect(showPlayerList)
+
+
+-- Message "Nebula Cheats [FREE]" dans un en-tête noir et violet
+local nebulaMessage = Instance.new("TextLabel")
+nebulaMessage.Size = UDim2.new(0, 200, 0, 50)
+nebulaMessage.Position = UDim2.new(1, -210, 1, -50)  -- Positionné en bas à droite
+nebulaMessage.Text = "Nebula Cheats [FREE]"
+nebulaMessage.BackgroundTransparency = 0  -- Fond visible
+nebulaMessage.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Fond noir
+nebulaMessage.TextColor3 = Color3.fromRGB(128, 0, 128)  -- Texte violet
+nebulaMessage.TextSize = 18
+nebulaMessage.Font = Enum.Font.SourceSans
+nebulaMessage.TextStrokeTransparency = 0.8
+nebulaMessage.Parent = screenGui
+
+
+-- Fonction de téléportation
+local function teleportToPlayer(targetPlayer)
+    if targetPlayer and targetPlayer.Character then
+        local targetHumanoidRootPart = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if targetHumanoidRootPart then
+            player.Character:SetPrimaryPartCFrame(targetHumanoidRootPart.CFrame)
+        end
+    end
+end
+
+-- Activation/Désactivation avec la touche "T"
+mouse.KeyDown:Connect(function(key)
+    if key:lower() == tpbutton then
+        if selectedPlayer then
+            teleportToPlayer(selectedPlayer)
+            tpButtonUI.Text = "Choisir un joueur"
+            selectedPlayer = nil  -- Reset
+        end
+    elseif key:lower() == controls.front then
+        -- Définir d'autres actions si nécessaire
+    elseif key:lower() == controls.back then
+        -- Définir d'autres actions si nécessaire
+    elseif key:lower() == controls.right then
+        -- Définir d'autres actions si nécessaire
+    elseif key:lower() == controls.left then
+        -- Définir d'autres actions si nécessaire
+    elseif key:lower() == controls.up then
+        -- Définir d'autres actions si nécessaire
+    elseif key:lower() == controls.down then
+        -- Définir d'autres actions si nécessaire
+    end
+end)
