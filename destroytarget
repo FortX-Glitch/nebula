@@ -1,0 +1,75 @@
+-- Configs
+local toggleButton = "l"  -- Touche pour activer/désactiver la destruction
+-- Configs
+
+local player = game:GetService("Players").LocalPlayer
+local mouse = player:GetMouse()
+local runservice = game:GetService("RunService")
+
+local destroying = false  -- Variable pour savoir si la destruction est activée
+
+-- Création de l'UI pour la destruction
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+-- Bouton pour activer/désactiver la destruction
+local toggleButtonUI = Instance.new("TextButton")
+toggleButtonUI.Text = "Détruire: OFF"
+toggleButtonUI.Size = UDim2.new(0, 200, 0, 50)
+toggleButtonUI.Position = UDim2.new(0, 10, 0.8, -25)
+toggleButtonUI.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+toggleButtonUI.TextColor3 = Color3.fromRGB(128, 0, 128)
+toggleButtonUI.Font = Enum.Font.SourceSans
+toggleButtonUI.TextSize = 18
+toggleButtonUI.TextStrokeTransparency = 0.8
+toggleButtonUI.Parent = screenGui
+
+-- Fonction pour détruire un objet
+local function destroyTargetObject(object)
+    if object:IsA("BasePart") then
+        -- Détruire l'objet
+        object:Destroy()
+    end
+end
+
+-- Fonction pour gérer le clic de la souris
+local function onMouseClick()
+    if destroying then
+        -- Récupérer la position du clic de la souris
+        local target = mouse.Target
+
+        -- Si un objet est trouvé, le détruire
+        if target then
+            destroyTargetObject(target)
+        end
+    end
+end
+
+-- Activation/Désactivation avec la touche "L"
+mouse.KeyDown:Connect(function(key)
+    if key:lower() == toggleButton then
+        destroying = not destroying
+        -- Mettre à jour le texte du bouton en fonction de l'état
+        if destroying then
+            toggleButtonUI.Text = "Détruire: ON"
+        else
+            toggleButtonUI.Text = "Détruire: OFF"
+        end
+    end
+end)
+
+-- Appeler la fonction de destruction lorsque l'utilisateur clique
+mouse.Button1Down:Connect(onMouseClick)
+
+-- Message "Nebula Cheats [FREE]" dans un en-tête noir et violet
+local nebulaMessage = Instance.new("TextLabel")
+nebulaMessage.Size = UDim2.new(0, 200, 0, 50)
+nebulaMessage.Position = UDim2.new(1, -210, 1, -50)  -- Positionné en bas à droite
+nebulaMessage.Text = "Nebula Cheats [FREE]"
+nebulaMessage.BackgroundTransparency = 0  -- Fond visible
+nebulaMessage.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Fond noir
+nebulaMessage.TextColor3 = Color3.fromRGB(128, 0, 128)  -- Texte violet
+nebulaMessage.TextSize = 18
+nebulaMessage.Font = Enum.Font.SourceSans
+nebulaMessage.TextStrokeTransparency = 0.8
+nebulaMessage.Parent = screenGui
