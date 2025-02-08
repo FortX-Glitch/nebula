@@ -1,0 +1,154 @@
+--- Configs
+local speed = 100  -- Vitesse initiale
+local defaultSpeed = 16  -- La vitesse par défaut de Roblox
+local controls = {
+    front = "w",
+    back = "s",
+    right = "d",
+    left = "a",
+    up = " ",
+    down = "q"
+}
+-- Configs
+
+local player = game:GetService("Players").LocalPlayer
+local mouse = player:GetMouse()
+local runservice = game:GetService("RunService")
+
+local speedControl = {F = 0, R = 0, B = 0, L = 0, U = 0, D = 0}
+local moving = false  -- Indicateur pour activer/désactiver le speed hack
+
+-- Fonction pour appliquer la vitesse à la marche (speed hack)
+local function applySpeed()
+    local character = player.Character
+    if not character then return end
+    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if not humanoid then return end
+
+    -- Modifier la vitesse de marche du humanoid si speed hack activé
+    if moving then
+        humanoid.WalkSpeed = speed
+    else
+        humanoid.WalkSpeed = defaultSpeed  -- Revenir à la vitesse par défaut
+    end
+end
+
+-- Interface utilisateur pour ajuster la vitesse
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+local speedControlButton = Instance.new("TextButton")
+speedControlButton.Text = "Vitesse: " .. speed
+speedControlButton.Size = UDim2.new(0, 200, 0, 50)
+speedControlButton.Position = UDim2.new(0, 10, 0.8, -25)  -- Positionné en bas à gauche
+speedControlButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+speedControlButton.TextColor3 = Color3.fromRGB(128, 0, 128)
+speedControlButton.Font = Enum.Font.SourceSans
+speedControlButton.TextSize = 18
+speedControlButton.TextStrokeTransparency = 0.8
+speedControlButton.Parent = screenGui
+
+-- Bouton "+" pour augmenter la vitesse
+local plusButton = Instance.new("TextButton")
+plusButton.Text = "+"
+plusButton.Size = UDim2.new(0, 50, 0, 50)
+plusButton.Position = UDim2.new(0, 220, 0.8, -25)  -- Positionné à droite du bouton "Vitesse"
+plusButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+plusButton.TextColor3 = Color3.fromRGB(128, 0, 128)
+plusButton.Font = Enum.Font.SourceSans
+plusButton.TextSize = 18
+plusButton.TextStrokeTransparency = 0.8
+plusButton.Parent = screenGui
+
+-- Bouton "-" pour diminuer la vitesse
+local minusButton = Instance.new("TextButton")
+minusButton.Text = "-"
+minusButton.Size = UDim2.new(0, 50, 0, 50)
+minusButton.Position = UDim2.new(0, 170, 0.8, -25)  -- Positionné à gauche du bouton "Vitesse"
+minusButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+minusButton.TextColor3 = Color3.fromRGB(128, 0, 128)
+minusButton.Font = Enum.Font.SourceSans
+minusButton.TextSize = 18
+minusButton.TextStrokeTransparency = 0.8
+minusButton.Parent = screenGui
+
+
+-- Fonction pour ajuster la vitesse en cliquant sur "+" ou "-"
+plusButton.MouseButton1Click:Connect(function()
+    speed = speed + 10
+    if speed > 1000 then speed = 1000 end  -- Limite de la vitesse maximale
+    speedControlButton.Text = "Vitesse: " .. speed
+end)
+
+minusButton.MouseButton1Click:Connect(function()
+    speed = speed - 10
+    if speed < 10 then speed = 10 end  -- Limite de la vitesse minimale
+    speedControlButton.Text = "Vitesse: " .. speed
+end)
+
+-- Fonction pour activer/désactiver la vitesse en cliquant sur le bouton "Vitesse: [Nombre]"
+speedControlButton.MouseButton1Click:Connect(function()
+    moving = not moving  -- Bascule l'état de "moving" (actif/inactif)
+    if moving then
+        speedControlButton.Text = "Vitesse: " .. speed .. " (Activée)"
+    else
+        speedControlButton.Text = "Vitesse: " .. speed .. " (Désactivée)"
+    end
+end)
+
+-- Applique la vitesse en continu si le speed hack est activé
+runservice.Heartbeat:Connect(function()
+    applySpeed()
+end)
+
+-- Activation/Désactivation avec les touches directionnelles
+mouse.KeyDown:Connect(function(key)
+    if key:lower() == controls.front then
+        speedControl.F = 1
+    elseif key:lower() == controls.back then
+        speedControl.B = 1
+    elseif key:lower() == controls.right then
+        speedControl.R = 1
+    elseif key:lower() == controls.left then
+        speedControl.L = 1
+    elseif key:lower() == controls.up then
+        speedControl.U = 1
+    elseif key:lower() == controls.down then
+        speedControl.D = 1
+    end
+end)
+
+mouse.KeyUp:Connect(function(key)
+    if key:lower() == controls.front then
+        speedControl.F = 0
+    elseif key:lower() == controls.back then
+        speedControl.B = 0
+    elseif key:lower() == controls.right then
+        speedControl.R = 0
+    elseif key:lower() == controls.left then
+        speedControl.L = 0
+    elseif key:lower() == controls.up then
+        speedControl.U = 0
+    elseif key:lower() == controls.down then
+        speedControl.D = 0
+    end
+end)
+
+-- Message "Nebula Cheats [FREE]" dans un en-tête noir et violet
+local nebulaMessage = Instance.new("TextLabel")
+nebulaMessage.Size = UDim2.new(0, 200, 0, 50)
+nebulaMessage.Position = UDim2.new(1, -210, 1, -50)  -- Positionné en bas à droite
+nebulaMessage.Text = "Nebula Cheats [FREE]"
+nebulaMessage.BackgroundTransparency = 0  -- Fond visible
+nebulaMessage.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Fond noir
+nebulaMessage.TextColor3 = Color3.fromRGB(128, 0, 128)  -- Texte violet
+nebulaMessage.TextSize = 18
+nebulaMessage.Font = Enum.Font.SourceSans
+nebulaMessage.TextStrokeTransparency = 0.8
+nebulaMessage.Parent = screenGui
+
+
+player.CharacterAdded:Connect(function()
+    moving = false
+    speedControlButton.Text = "Vitesse: " .. speed .. " (Désactivée)"  -- Remise du bouton à l'état initial
+end)
