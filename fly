@@ -1,13 +1,13 @@
---- Configs
+-- Configs
 local flybutton = "e"
 local flyspeed = 100
 local controls = {
-	front = "w",
-	back = "s",
-	right = "d",
-	left = "a",
-	up = " ",
-	down = "q"
+    front = "w",
+    back = "s",
+    right = "d",
+    left = "a",
+    up = " ",
+    down = "q"
 }
 -- Configs
 
@@ -18,51 +18,58 @@ local runservice = game:GetService("RunService")
 local flycontrol = {F = 0, R = 0, B = 0, L = 0, U = 0, D = 0}
 local flying = false
 local bv, bg
+local collisionEnabled = true  -- Variable pour suivre l'état de la collision
 
 -- Fonction de vol
 local function fly()
-	local character = player.Character
-	if not character then return end
-	local hrp = character:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-	local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-	if not humanoid then return end
-	
-	flying = true
-	
-	bv = Instance.new("BodyVelocity")
-	bg = Instance.new("BodyGyro")
-	bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
-	bg.CFrame = hrp.CFrame
-	bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
-	bg.P = 9e4
-	bv.Parent = hrp
-	bg.Parent = hrp
-	
-	for _, child in pairs(character:GetDescendants()) do
-		if child:IsA("BasePart") then
-			child.CanCollide = false
-		end
-	end
-	
-	runservice:BindToRenderStep("FlyUpdate", Enum.RenderPriority.Character.Value, function()
-		if not flying then
-			runservice:UnbindFromRenderStep("FlyUpdate")
-			bv:Destroy()
-			bg:Destroy()
-			for _, child in pairs(character:GetDescendants()) do
-				if child:IsA("BasePart") then
-					child.CanCollide = true
-				end
-			end
-			humanoid.PlatformStand = false
-			return
-		end
-		
-		humanoid.PlatformStand = true
-		bv.Velocity = (workspace.Camera.CFrame.LookVector * ((flycontrol.F - flycontrol.B) * flyspeed)) + (workspace.Camera.CFrame.RightVector * ((flycontrol.R - flycontrol.L) * flyspeed)) + (workspace.Camera.CFrame.UpVector * ((flycontrol.U - flycontrol.D) * flyspeed))
-		bg.CFrame = workspace.Camera.CFrame
-	end)
+    local character = player.Character
+    if not character then return end
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if not humanoid then return end
+    
+    flying = true
+    
+    bv = Instance.new("BodyVelocity")
+    bg = Instance.new("BodyGyro")
+    bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+    bg.CFrame = hrp.CFrame
+    bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
+    bg.P = 9e4
+    bv.Parent = hrp
+    bg.Parent = hrp
+    
+    -- Désactiver la collision si l'utilisateur l'a choisi
+    if not collisionEnabled then
+        for _, child in pairs(character:GetDescendants()) do
+            if child:IsA("BasePart") then
+                child.CanCollide = false
+            end
+        end
+    end
+    
+    runservice:BindToRenderStep("FlyUpdate", Enum.RenderPriority.Character.Value, function()
+        if not flying then
+            runservice:UnbindFromRenderStep("FlyUpdate")
+            bv:Destroy()
+            bg:Destroy()
+            -- Restaurer les collisions lorsque le vol est terminé
+            if collisionEnabled then
+                for _, child in pairs(character:GetDescendants()) do
+                    if child:IsA("BasePart") then
+                        child.CanCollide = true
+                    end
+                end
+            end
+            humanoid.PlatformStand = false
+            return
+        end
+        
+        humanoid.PlatformStand = true
+        bv.Velocity = (workspace.Camera.CFrame.LookVector * ((flycontrol.F - flycontrol.B) * flyspeed)) + (workspace.Camera.CFrame.RightVector * ((flycontrol.R - flycontrol.L) * flyspeed)) + (workspace.Camera.CFrame.UpVector * ((flycontrol.U - flycontrol.D) * flyspeed))
+        bg.CFrame = workspace.Camera.CFrame
+    end)
 end
 
 -- Création de l'interface UI
@@ -112,56 +119,97 @@ validateButton.Font = Enum.Font.SourceSans
 validateButton.TextSize = 18
 validateButton.Parent = screenGui
 
+-- Création du bouton pour activer/désactiver la collision
+local collisionButtonUI = Instance.new("TextButton")
+collisionButtonUI.Text = "Activer/Désactiver Collision"
+collisionButtonUI.Size = UDim2.new(0, 200, 0, 50)
+collisionButtonUI.Position = UDim2.new(0, 10, 0.9, -25)  -- Positionné juste en dessous du bouton de vol
+collisionButtonUI.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+collisionButtonUI.TextColor3 = Color3.fromRGB(128, 0, 128)
+collisionButtonUI.Font = Enum.Font.SourceSans
+collisionButtonUI.TextSize = 18
+collisionButtonUI.Parent = screenGui
+
+-- Fonction pour activer ou désactiver la collision
+local function toggleCollision()
+    local character = player.Character
+    if not character then return end
+    
+    -- Inverser l'état de la collision
+    collisionEnabled = not collisionEnabled
+    
+    for _, child in pairs(character:GetDescendants()) do
+        if child:IsA("BasePart") then
+            child.CanCollide = collisionEnabled
+        end
+    end
+    
+    -- Mettre à jour le texte du bouton pour indiquer l'état actuel
+    if collisionEnabled then
+        collisionButtonUI.Text = "Désactiver Collision"
+    else
+        collisionButtonUI.Text = "Activer Collision"
+    end
+end
+
+-- Connecter le bouton à la fonction toggleCollision
+collisionButtonUI.MouseButton1Click:Connect(function()
+    toggleCollision()
+end)
+
+-- Fonction pour changer la vitesse du vol
 validateButton.MouseButton1Click:Connect(function()
-	local newSpeed = tonumber(speedTextBox.Text)
-	if newSpeed and newSpeed > 0 then
-		flyspeed = newSpeed
-		print("Nouvelle vitesse définie: " .. flyspeed)
-	end
+    local newSpeed = tonumber(speedTextBox.Text)
+    if newSpeed and newSpeed > 0 then
+        flyspeed = newSpeed
+        print("Nouvelle vitesse définie: " .. flyspeed)
+    end
 end)
 
+-- Gérer l'activation et la désactivation du vol avec la touche
 flyButtonUI.MouseButton1Click:Connect(function()
-	if flying then
-		flying = false
-	else
-		fly()
-	end
+    if flying then
+        flying = false
+    else
+        fly()
+    end
 end)
 
+-- Gérer les contrôles de vol
 mouse.KeyDown:Connect(function(key)
-	if key:lower() == flybutton then
-		if flying then
-			flying = false
-		else
-			fly()
-		end
-	elseif key:lower() == controls.front then
-		flycontrol.F = 1
-	elseif key:lower() == controls.back then
-		flycontrol.B = 1
-	elseif key:lower() == controls.right then
-		flycontrol.R = 1
-	elseif key:lower() == controls.left then
-		flycontrol.L = 1
-	elseif key:lower() == controls.up then
-		flycontrol.U = 1
-	elseif key:lower() == controls.down then
-		flycontrol.D = 1
-	end
+    if key:lower() == flybutton then
+        if flying then
+            flying = false
+        else
+            fly()
+        end
+    elseif key:lower() == controls.front then
+        flycontrol.F = 1
+    elseif key:lower() == controls.back then
+        flycontrol.B = 1
+    elseif key:lower() == controls.right then
+        flycontrol.R = 1
+    elseif key:lower() == controls.left then
+        flycontrol.L = 1
+    elseif key:lower() == controls.up then
+        flycontrol.U = 1
+    elseif key:lower() == controls.down then
+        flycontrol.D = 1
+    end
 end)
 
 mouse.KeyUp:Connect(function(key)
-	if key:lower() == controls.front then
-		flycontrol.F = 0
-	elseif key:lower() == controls.back then
-		flycontrol.B = 0
-	elseif key:lower() == controls.right then
-		flycontrol.R = 0
-	elseif key:lower() == controls.left then
-		flycontrol.L = 0
-	elseif key:lower() == controls.up then
-		flycontrol.U = 0
-	elseif key:lower() == controls.down then
-		flycontrol.D = 0
-	end
+    if key:lower() == controls.front then
+        flycontrol.F = 0
+    elseif key:lower() == controls.back then
+        flycontrol.B = 0
+    elseif key:lower() == controls.right then
+        flycontrol.R = 0
+    elseif key:lower() == controls.left then
+        flycontrol.L = 0
+    elseif key:lower() == controls.up then
+        flycontrol.U = 0
+    elseif key:lower() == controls.down then
+        flycontrol.D = 0
+    end
 end)
