@@ -17,6 +17,7 @@ local runservice = game:GetService("RunService")
 
 local flycontrol = {F = 0, R = 0, B = 0, L = 0, U = 0, D = 0}
 local flying = false
+local bv, bg
 
 -- Fonction de vol
 local function fly()
@@ -29,8 +30,8 @@ local function fly()
 	
 	flying = true
 	
-	local bv = Instance.new("BodyVelocity")
-	local bg = Instance.new("BodyGyro")
+	bv = Instance.new("BodyVelocity")
+	bg = Instance.new("BodyGyro")
 	bv.MaxForce = Vector3.new(9e4, 9e4, 9e4)
 	bg.CFrame = hrp.CFrame
 	bg.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
@@ -38,55 +39,44 @@ local function fly()
 	bv.Parent = hrp
 	bg.Parent = hrp
 	
-	for i, child in pairs(character:GetDescendants()) do
+	for _, child in pairs(character:GetDescendants()) do
 		if child:IsA("BasePart") then
-			coroutine.wrap(function()
-				local con = nil
-				con = runservice.Stepped:Connect(function()
-					if not flying then
-						con:Disconnect()
-						child.CanCollide = true
-					end
-					child.CanCollide = false
-				end)
-			end)()
+			child.CanCollide = false
 		end
 	end
 	
-	local con = nil
-	con = runservice.Stepped:Connect(function()
+	runservice:BindToRenderStep("FlyUpdate", Enum.RenderPriority.Character.Value, function()
 		if not flying then
-			con:Disconnect()
+			runservice:UnbindFromRenderStep("FlyUpdate")
 			bv:Destroy()
 			bg:Destroy()
+			for _, child in pairs(character:GetDescendants()) do
+				if child:IsA("BasePart") then
+					child.CanCollide = true
+				end
+			end
+			humanoid.PlatformStand = false
+			return
 		end
 		
 		humanoid.PlatformStand = true
-		bv.Velocity = (workspace.Camera.CoordinateFrame.LookVector * ((flycontrol.F - flycontrol.B) * flyspeed)) + (workspace.CurrentCamera.CoordinateFrame.RightVector * ((flycontrol.R - flycontrol.L) * flyspeed)) + (workspace.CurrentCamera.CoordinateFrame.UpVector * ((flycontrol.U - flycontrol.D) * flyspeed))
-		bg.CFrame = workspace.Camera.CoordinateFrame
+		bv.Velocity = (workspace.Camera.CFrame.LookVector * ((flycontrol.F - flycontrol.B) * flyspeed)) + (workspace.Camera.CFrame.RightVector * ((flycontrol.R - flycontrol.L) * flyspeed)) + (workspace.Camera.CFrame.UpVector * ((flycontrol.U - flycontrol.D) * flyspeed))
+		bg.CFrame = workspace.Camera.CFrame
 	end)
-	
-	repeat wait() until not flying
-	
-	while humanoid.PlatformStand == true do
-		humanoid.PlatformStand = false
-		task.wait()
-	end
 end
 
--- Création du bouton UI pour activer/désactiver le vol
+-- Création de l'interface UI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = player.PlayerGui
 
 local flyButtonUI = Instance.new("TextButton")
 flyButtonUI.Text = "Activer/Arrêter le vol"
 flyButtonUI.Size = UDim2.new(0, 200, 0, 50)
-flyButtonUI.Position = UDim2.new(0, 10, 0.8, -25)  -- Positionné en bas à gauche
-flyButtonUI.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Fond noir pour le bouton
-flyButtonUI.TextColor3 = Color3.fromRGB(128, 0, 128)  -- Texte violet
+flyButtonUI.Position = UDim2.new(0, 10, 0.8, -25)
+flyButtonUI.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+flyButtonUI.TextColor3 = Color3.fromRGB(128, 0, 128)
 flyButtonUI.Font = Enum.Font.SourceSans
 flyButtonUI.TextSize = 18
-flyButtonUI.TextStrokeTransparency = 0.8
 flyButtonUI.Parent = screenGui
 
 -- Message "Nebula Cheats [FREE]" dans un en-tête noir et violet
@@ -102,18 +92,42 @@ nebulaMessage.Font = Enum.Font.SourceSans
 nebulaMessage.TextStrokeTransparency = 0.8
 nebulaMessage.Parent = screenGui
 
--- Toggle le vol avec le bouton UI
-flyButtonUI.MouseButton1Click:Connect(function()
-	if flying then
-		flying = false
-		flyButtonUI.Text = "Activer le vol"
-	else
-		fly()
-		flyButtonUI.Text = "Arrêter le vol"
+local speedTextBox = Instance.new("TextBox")
+speedTextBox.Size = UDim2.new(0, 100, 0, 50)
+speedTextBox.Position = UDim2.new(0, 220, 0.8, -25)
+speedTextBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+speedTextBox.TextColor3 = Color3.fromRGB(128, 0, 128)
+speedTextBox.PlaceholderText = "Vitesse"
+speedTextBox.Font = Enum.Font.SourceSans
+speedTextBox.TextSize = 18
+speedTextBox.Parent = screenGui
+
+local validateButton = Instance.new("TextButton")
+validateButton.Text = "OK"
+validateButton.Size = UDim2.new(0, 50, 0, 50)
+validateButton.Position = UDim2.new(0, 330, 0.8, -25)
+validateButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+validateButton.TextColor3 = Color3.fromRGB(128, 0, 128)
+validateButton.Font = Enum.Font.SourceSans
+validateButton.TextSize = 18
+validateButton.Parent = screenGui
+
+validateButton.MouseButton1Click:Connect(function()
+	local newSpeed = tonumber(speedTextBox.Text)
+	if newSpeed and newSpeed > 0 then
+		flyspeed = newSpeed
+		print("Nouvelle vitesse définie: " .. flyspeed)
 	end
 end)
 
--- Activation/Désactivation avec la touche "E"
+flyButtonUI.MouseButton1Click:Connect(function()
+	if flying then
+		flying = false
+	else
+		fly()
+	end
+end)
+
 mouse.KeyDown:Connect(function(key)
 	if key:lower() == flybutton then
 		if flying then
@@ -150,9 +164,4 @@ mouse.KeyUp:Connect(function(key)
 	elseif key:lower() == controls.down then
 		flycontrol.D = 0
 	end
-end)
-
-player.CharacterAdded:Connect(function()
-	flying = false
-	flyButtonUI.Text = "Activer le vol"  -- Remise du bouton à l'état initial
 end)
